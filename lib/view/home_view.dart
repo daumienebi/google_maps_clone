@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_maps_clone/utils/constants.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import 'package:location/location.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer' as dev;
-import '../constants.dart';
 
-class HomeScreen extends StatefulWidget{
-  const HomeScreen({super.key});
+class HomeView extends StatefulWidget{
+  const HomeView({super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return _HomeScreenState();
+    return _HomeViewState();
   }
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class _HomeViewState extends State<HomeView>
     with AutomaticKeepAliveClientMixin {
 
+  // Google map's variable
   late var location;
   late LocationData? userLocation;
   final Set<Marker> _markerList = {};
@@ -27,11 +29,10 @@ class _HomeScreenState extends State<HomeScreen>
   CameraPosition _cameraPosition = _initialCameraPosition;
   bool _mapCreated = false;
   final bool _mapMoving = false;
-  final bool _compasActivated = true;
+  final bool _compasActivated = false;
   final bool _toolBarActivated = false;
   final CameraTargetBounds _cameraTargetBounds = CameraTargetBounds.unbounded;
-  final MinMaxZoomPreference _minMaxZoomPreference =
-      MinMaxZoomPreference.unbounded;
+  final MinMaxZoomPreference _minMaxZoomPreference = MinMaxZoomPreference.unbounded;
   final MapType _mapType = MapType.normal;
   final bool _rotationActivated = true;
   final bool _scrollActivated = true;
@@ -45,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen>
   late GoogleMapController _mapController;
   final bool _nightMode = true;
 
-  // Current index for the navigation bar
+  // Navigation bar variable
   int currentPageIndex = 0;
 
   @override
@@ -68,13 +69,13 @@ class _HomeScreenState extends State<HomeScreen>
     //double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton:  Column(
+      floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
             backgroundColor: Colors.white,
-            heroTag: "btn1",
-            onPressed: () => dev.log('hey'),
+            heroTag: "heroTag1",
+            onPressed: () => currentLocation(),
             child: const Icon(Icons.location_searching,color: Colors.black87,),
           ),
           const SizedBox(
@@ -85,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen>
                 borderRadius: BorderRadius.all(Radius.circular(12))
             ),
             backgroundColor: Constants.googleMapsBlue,
-            heroTag: "btn2",
+            heroTag: "heroTag2",
             onPressed: () => dev.log('yeh'),
             child: const Icon(Icons.directions),
           )
@@ -133,76 +134,146 @@ class _HomeScreenState extends State<HomeScreen>
 
       ),
 
-      body: mapWidget()
+      body: Stack(
+        children: [
+          mapWidget(),
+          positionedSearchBar(),
+          positionedHorizontalListItems()
+
+        ],
+      ),
+      );
+  }
+
+  Widget positionedSearchBar(){
+    return Positioned(
+      top: 30,
+      left: 15,
+      right: 15,
+      child: InkWell(
+        onTap: ()=> dev.log('Open search page'),
+        child: Container(
+          padding: const EdgeInsets.all(7.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            color: Colors.white,
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                  color: Colors.black38,
+                  blurRadius: 2,
+                  offset: Offset(1,2),
+                  blurStyle: BlurStyle.normal
+              )
+            ]
+          ),
+
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(FontAwesomeIcons.locationDot,color: Constants.googleMapsBlue,),
+              const Text('Search here',style: TextStyle(fontSize: 15),textAlign: TextAlign.left),
+              //using another row here to separate the last 2 items to the
+              // end of the search bar
+              Row(
+                children: [
+                  IconButton(
+                      onPressed: (){
+                        dev.log('Open mic dialog');
+                      },
+                      icon: const Icon(Icons.mic_rounded)
+                  ),
+                  IconButton(
+                      onPressed: (){
+                       dev.log('Open accounts dialog');
+                      },
+                      icon: const Icon(Icons.person_pin)
+                  )
+                ],
+              )
+
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  /*
+  Widget positionedHorizontalListItems(){
+    return Positioned(
+      top: 90,
+        left: 0,
+        right: 0,
+        child: Container(
+          color: Colors.transparent,
+          height: 55,
+          child: ListView(
+            padding: const EdgeInsets.all(5),
+            scrollDirection: Axis.horizontal,
+            children: [
+              listItem(text:'Restaurants',
+                  onPressed: ()=> {},
+                  iconData: Icons.restaurant
+              ),
+              listItem(
+                text:'Hotels',
+                onPressed: () {
 
-            Container(
-            color: Colors.transparent,
-            height: 60,
-            child: ListView(
-              padding: const EdgeInsets.all(5),
-              scrollDirection: Axis.horizontal,
-              children: [
-                optionButton(text:'Restaurants',
-                    onPressed: ()=> {},
-                    backgroundColor: Colors.white),
-                optionButton(
-                  text:'Hotels',
-                  onPressed: () {},
-                  backgroundColor: Colors.white,
-                ),
-                optionButton(
-                  text:'Groceries',
-                  onPressed: ()=> currentLocation(),
-                  backgroundColor: Colors.white,
-                ),
-                optionButton(
-                    text:'Gas',
-                    onPressed: (){},
-                    backgroundColor: Colors.white
-                ),
-                optionButton(
-                    text:'Bars',
-                    onPressed: (){},
-                    backgroundColor: Colors.white
-                ),
-                optionButton(
-                    text:'Attractions',
-                    onPressed: (){},
-                    backgroundColor: Colors.white
-                ),
-                optionButton(
-                    text:'Shopping',
-                    onPressed: (){},
-                    backgroundColor: Colors.white
-                ),
-                optionButton(
-                    text:'... More',
-                    onPressed: (){},
-                    backgroundColor: Colors.white
-                ),
-              ],
-            ),
+                },
+                iconData: Icons.hotel_outlined
+              ),
+              listItem(
+                text:'Groceries',
+                onPressed: ()=> currentLocation(),
+                iconData: Icons.local_grocery_store_outlined
+              ),
+              listItem(
+                  text:'Gas',
+                  onPressed: (){},
+                  iconData: Icons.local_gas_station
+              ),
+              listItem(
+                  text:'Bars',
+                  onPressed: (){},
+                  iconData: Icons.local_bar_sharp
+              ),
+              listItem(
+                  text:'Attractions',
+                  onPressed: (){},
+                  iconData: Icons.attractions
+              ),
+              listItem(
+                  text:'Shopping',
+                  onPressed: (){},
+                  iconData: Icons.shopping_bag_outlined
+              ),
+              listItem(
+                  text:'More',
+                  onPressed: (){},
+                  iconData: Icons.more_horiz
+              ),
+            ],
           ),
-   */
-  Widget optionButton({required String text,Function()? onPressed,Color? backgroundColor}){
+        )
+    );
+  }
+
+  Widget listItem({required String text,Function()? onPressed,IconData? iconData}){
     return Padding(
         padding: const EdgeInsets.all(7),
-        child: Row(
-          children: [
-            ElevatedButton(
-              onPressed: onPressed,
-              style: TextButton.styleFrom(
-                  backgroundColor: backgroundColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
-              ),
-              child: Text(text,style: const TextStyle(color: Colors.black),),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+          ),
+          child: Row(
+            children: [
+              Icon(iconData,color: Colors.black87),
+              const SizedBox(width: 5),
+              Text(text,style: const TextStyle(color: Colors.black),)
+            ],
+          )
 
-            ),
-          ],
         )
     );
   }
@@ -262,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen>
       CameraPosition(
         bearing: 0,
         target: LatLng(latLng.latitude, latLng.longitude),
-        zoom: 7.0,
+        zoom: 14.0,
       ),
     ));
   }
@@ -316,7 +387,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   @override
-  // TODO: implement wantKeepAlive
   //https://stackoverflow.com/questions/56632225/google-maps-dequeuebuffer-bufferqueue-has-been-abandoned
   bool get wantKeepAlive => true;
 }
